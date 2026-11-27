@@ -562,3 +562,22 @@ def png_bytes(img):
     return buf.getvalue()
 
 
+
+
+def decrypt_to_image(data, cipher, key, iv, width, height):
+    """Dekripsi ciphertext (.bin) menjadi gambar RGB. Melempar ValueError dengan pesan yang jelas."""
+    if not data or len(data) % 16:
+        raise ValueError("Ukuran berkas bukan kelipatan 16 byte. Pastikan ini berkas .bin hasil enkripsi yang utuh.")
+    try:
+        raw = cipher.decrypt_bytes(data, key, iv)
+    except ValueError:
+        raise ValueError("Dekripsi gagal (padding tidak valid). Periksa kunci, IV, dan S-Box; "
+                         "semuanya harus sama dengan saat enkripsi.")
+    if len(raw) != width * height * 3:
+        msg = f"Ukuran tidak cocok: data berisi {len(raw)} byte, sedangkan {width} x {height} x 3 = {width * height * 3} byte."
+        if len(raw) % 3 == 0:
+            p = len(raw) // 3
+            pairs = [f"{a} x {p // a}" for a in range(int(p ** 0.5), 0, -1) if p % a == 0][:3]
+            msg += f" Gambar ini punya {p} piksel; kemungkinan ukuran (lebar x tinggi atau sebaliknya): {', '.join(pairs)}."
+        raise ValueError(msg)
+    return Image.frombytes("RGB", (width, height), raw)

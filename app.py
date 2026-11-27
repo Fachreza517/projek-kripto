@@ -1,5 +1,7 @@
 """Antarmuka Streamlit - S-Box Genetic Algorithm & Enkripsi Gambar (Kelompok 9)."""
+import hashlib
 import io
+import json
 import random
 import string
 import time
@@ -159,7 +161,7 @@ def main():
         f"<div title='Setiap kotak adalah satu entri S-Box; warna makin tua berarti nilai makin besar'>"
         f"{sbox_grid(sbox, mini=True)}</div></div>", unsafe_allow_html=True)
 
-    tab1, tab2, tab3 = st.tabs(["1. S-Box", "2. Evaluasi", "3. Enkripsi gambar"])
+    tab1, tab2, tab3, tab4 = st.tabs(["1. S-Box", "2. Evaluasi", "3. Enkripsi gambar", "4. Dekripsi gambar"])
 
     # ---------- Tab 1
     with tab1:
@@ -287,9 +289,53 @@ def main():
                         z.writestr(f"{stem}_encrypted.png", C.png_bytes(r["cipher_img"]))
                         z.writestr(f"{stem}_decrypted.png", C.png_bytes(r["dec_img"]))
                         z.writestr(f"{stem}.bin", r["enc_bytes"])
+                    z.writestr(f"{stem}_meta.json", json.dumps({
+                        "width": r["row"]["width"], "height": r["row"]["height"], "mode": "RGB",
+                        "sbox_sha256": hashlib.sha256(sbox.tobytes()).hexdigest()}, indent=2))
                     z.writestr("image_results.csv", df.to_csv(index=False))
                     nb = io.BytesIO(); np.save(nb, sbox); z.writestr("best_sbox.npy", nb.getvalue())
                 st.download_button("Unduh hasil (ZIP)", zb.getvalue(), "hasil_enkripsi.zip", mime="application/zip")
+
+
+    # ---------- Tab 4
+    with tab4:
+        if sbox is None:
+            st.info("Siapkan S-Box di tab 1 terlebih dahulu.")
+        else:
+            st.caption("Dekripsi memakai S-Box, kunci, dan IV di sidebar. Semuanya harus sama dengan saat enkripsi.")
+            bin_file = st.file_uploader("Berkas ciphertext (.bin)", type=["bin"], key="dec_bin")
+            meta_file = st.file_uploader("Berkas metadata (.json, opsional)", type=["json"], key="dec_meta",
+                                         help="File *_meta.json dari ZIP hasil enkripsi. Mengisi ukuran gambar otomatis.")
+            meta = {}
+            if meta_file is not None:
+                try:
+                    meta = json.load(meta_file)
+                except Exception:
+                    st.error("File metadata tidak bisa dibaca. Isi ukuran gambar secara manual.")
+            cw, ch = st.columns(2)
+            w = cw.number_input("Lebar (px)", 1, 20000, int(meta.get("width", 128)), key=f"dw{meta.get('width')}")
+            h = ch.number_input("Tinggi (px)", 1, 20000, int(meta.get("height", 128)), key=f"dh{meta.get('height')}")
+            key4 = st.session_state["key_text"].encode()
+            try:
+                iv4 = bytes.fromhex(iv_hex)
+            except ValueError:
+                iv4 = b""
+            if len(key4) != 16 or len(iv4) != 16:
+                st.warning("Kunci harus 16 karakter dan IV harus 32 karakter heksadesimal.")
+            if bin_file is not None and len(key4) == 16 and len(iv4) == 16 and st.button("Dekripsi gambar", type="primary"):
+                st.session_state.pop("dec_img", None)
+                try:
+                    with st.spinner("Mendekripsi..."):
+                        img = C.decrypt_to_image(bin_file.getvalue(), C.SBoxAES(sbox), key4, iv4, int(w), int(h))
+                    st.session_state["dec_img"] = (bin_file.name.rsplit(".", 1)[0], img)
+                    if meta.get("sbox_sha256") and meta["sbox_sha256"] != hashlib.sha256(sbox.tobytes()).hexdigest():
+                        st.warning("S-Box aktif berbeda dari S-Box saat enkripsi. Hasil kemungkinan berupa noise.")
+                except ValueError as exc:
+                    st.error(str(exc))
+            if st.session_state.get("dec_img"):
+                name, img = st.session_state["dec_img"]
+                st.image(img, caption=f"Hasil dekripsi {name} ({img.width} x {img.height} px)", width="stretch")
+                st.download_button("Unduh gambar (PNG)", C.png_bytes(img), f"{name}_decrypted.png", mime="image/png")
 
 
 main()
