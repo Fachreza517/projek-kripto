@@ -13,7 +13,7 @@ import streamlit as st
 import core as C
 
 DEFAULT_SBOX = Path(__file__).parent / "best_sbox.npy"
-INK, COBALT, GRID = "#101B33", "#2D4BEA", "#D5DBE8"
+INK, COBALT, GRID = "#101B33", "#8E3FE9", "#DBDE38"
 
 CSS = """
 <style>
