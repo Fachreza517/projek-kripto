@@ -13,7 +13,7 @@ import streamlit as st
 import core as C
 
 DEFAULT_SBOX = Path(__file__).parent / "best_sbox.npy"
-INK, COBALT, GRID = "#101B33", "#8E3FE9", "#DBDE38"
+INK, COBALT, GRID = "#101B33", "#2D4BEA", "#D5DBE8"
 
 CSS = """
 <style>
@@ -22,27 +22,27 @@ CSS = """
 h1, h2, h3, h4 { font-family: 'Bricolage Grotesque', sans-serif !important; letter-spacing: -0.02em; }
 .block-container { max-width: 1120px; padding-top: 2.2rem; }
 #MainMenu, footer { visibility: hidden; }
-[data-testid="stSidebar"] { border-right: 1px solid #D5DBE8; }
-.stTabs [data-baseweb="tab-list"] { gap: 6px; border-bottom: 1px solid #D5DBE8; }
+[data-testid="stSidebar"] { border-right: 1px solid rgba(128,128,128,.3); }
+.stTabs [data-baseweb="tab-list"] { gap: 6px; border-bottom: 1px solid rgba(128,128,128,.3); }
 .stTabs [data-baseweb="tab"] { height: 46px; padding: 0 14px; font-family: 'Bricolage Grotesque', sans-serif; font-size: 1.02rem; }
 .stTabs [aria-selected="true"] { color: #2D4BEA; }
 .stButton > button, .stDownloadButton > button { border-radius: 8px; font-weight: 500; }
 [data-testid="stMetricValue"] { font-family: 'IBM Plex Mono', monospace; font-size: 1.5rem; }
-[data-testid="stMetricLabel"] p { color: #55627f; }
+[data-testid="stMetricLabel"] p { opacity: .7; }
 .hero { display: flex; gap: 40px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 1.4rem; }
 .hero h1 { font-size: 2.5rem; line-height: 1.1; font-weight: 800; margin: 0 0 .7rem 0; padding: 0; max-width: 560px; }
-.hero p { color: #3c4a6b; max-width: 520px; margin: 0; line-height: 1.55; }
-.hero small { color: #6b7794; display: block; margin-top: .9rem; }
+.hero p { opacity: .85; max-width: 520px; margin: 0; line-height: 1.55; }
+.hero small { opacity: .65; display: block; margin-top: .9rem; }
 .sb { border-collapse: separate; border-spacing: 2px; }
 .sb td { text-align: center; font-family: 'IBM Plex Mono', monospace; border-radius: 3px; }
-.sb td.h { background: none; color: #6b7794; font-size: 11px; }
+.sb td.h { background: none; opacity: .6; font-size: 11px; }
 .scroll { overflow-x: auto; padding-bottom: 4px; }
-.panel { background: #fff; border: 1px solid #D5DBE8; border-radius: 10px; }
-.vrow { display: grid; grid-template-columns: 1.3fr 1fr 1.6fr auto; gap: 12px; align-items: center; padding: 11px 16px; border-bottom: 1px solid #E6EAF3; }
+.panel { background: rgba(128,128,128,.07); border: 1px solid rgba(128,128,128,.28); border-radius: 10px; }
+.vrow { display: grid; grid-template-columns: 1.3fr 1fr 1.6fr auto; gap: 12px; align-items: center; padding: 11px 16px; border-bottom: 1px solid rgba(128,128,128,.2); }
 .vrow:last-child { border-bottom: 0; }
 .vrow b { font-weight: 500; }
 .vrow .v { font-family: 'IBM Plex Mono', monospace; }
-.vrow .t { color: #6b7794; font-size: .9rem; }
+.vrow .t { opacity: .7; font-size: .9rem; }
 .pill { padding: 2px 11px; border-radius: 99px; font-size: .82rem; white-space: nowrap; }
 .ok { background: #DDF3EC; color: #0E5E4C; } .bad { background: #F8E1DB; color: #8E2F1E; } .info { background: #E4E8F5; color: #3A4A78; }
 @media (max-width: 640px) { .hero h1 { font-size: 1.9rem; } .vrow { grid-template-columns: 1fr 1fr; } }
@@ -68,7 +68,7 @@ def sbox_grid(sbox, mini=False):
         out.append("<tr>" + ("" if mini else f"<td class='h'>{r:X}</td>"))
         for c in range(16):
             if sbox is None:
-                bg, fg, txt, tip = "#F3A751", INK, "", ""
+                bg, fg, txt, tip = "#E3E8F2", INK, "", ""
             else:
                 v = int(sbox[r * 16 + c])
                 (bg, fg), txt = _shade(v), ("" if mini else f"{v:02X}")
@@ -88,7 +88,7 @@ def sac_grid(mat):
             v = float(mat[i][j])
             dev = min(abs(v - 0.5) / 0.08, 1)
             bg = f"rgb({round(221 + (248 - 221) * dev)},{round(243 + (225 - 243) * dev)},{round(236 + (219 - 236) * dev)})"
-            out.append(f"<td style='width:54px;height:30px;background:{bg};font-size:12px'>{v:.3f}</td>")
+            out.append(f"<td style='width:54px;height:30px;background:{bg};font-size:12px;color:{INK}'>{v:.3f}</td>")
         out.append("</tr>")
     out.append("</table></div>")
     return "".join(out)
@@ -262,7 +262,7 @@ def main():
                 for r in res:
                     row = r["row"]
                     with st.container(border=True):
-                        st.markdown(f"#### {r['name']}  \n<span style='color:#6b7794'>{row['width']} x {row['height']} px</span>",
+                        st.markdown(f"#### {r['name']}  \n<span style='opacity:.65'>{row['width']} x {row['height']} px</span>",
                                     unsafe_allow_html=True)
                         a, b, c = st.columns(3)
                         a.image(r["original"], caption="Asli", width="stretch")
