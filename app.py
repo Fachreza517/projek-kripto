@@ -68,7 +68,7 @@ def sbox_grid(sbox, mini=False):
         out.append("<tr>" + ("" if mini else f"<td class='h'>{r:X}</td>"))
         for c in range(16):
             if sbox is None:
-                bg, fg, txt, tip = "#E3E8F2", INK, "", ""
+                bg, fg, txt, tip = "#F3A751", INK, "", ""
             else:
                 v = int(sbox[r * 16 + c])
                 (bg, fg), txt = _shade(v), ("" if mini else f"{v:02X}")
